@@ -61,25 +61,25 @@ public:
     void moveUp()
     {
         y--;
-        if (y < 0)  y = HEIGHT;
+        if (y <= 0)  y = HEIGHT - 1;
     }
     
     void moveDown()
     {
         y++;
-        if (y > HEIGHT)  y = 0;
+        if (y >= HEIGHT)  y = 1;
     }
     
     void moveLeft()
     {
         x--;
-        if (x < 0)  x = WIDTH;
+        if (x <= 0)  x = WIDTH - 1;
     }
     
     void moveRight()
     {
         x++;
-        if (x > WIDTH)  x = 0;
+        if (x >= WIDTH)  x = 1;
     }
     
     void draw(char ch)
@@ -95,7 +95,7 @@ public:
 };
 
 
-class Snake : virtual public Console
+class Snake : virtual protected Console
 {
 protected:
     vector<Point> snake;
@@ -134,6 +134,20 @@ protected:
     void turnRight()
     {
         if (direction != 'a')   direction = 'd';
+    }
+
+    void move()
+    {
+        for(int i = snake.size() - 1; i > 0; i--)   //Snake moves
+            snake[i] = snake[i-1];
+        
+        switch(direction)   //Change direction of head
+        {
+            case 'w':   snake[0].moveUp();      break;
+            case 's':   snake[0].moveDown();    break;
+            case 'a':   snake[0].moveLeft();    break;
+            case 'd':   snake[0].moveRight();   break;
+        }
     }    
 };
 
@@ -170,10 +184,8 @@ protected:
 
     void drawObstacle()
     {
-        Point temp;
-        drawFrame();
-
         SetConsoleTextAttribute(console, 108);
+        Point temp;
         for (int i = 0; i < obstacle.size(); i++)
             for (int j = obstacle[i][0].x; j < obstacle[i][1].x; j++)
                 for (int k = obstacle[i][0].y; k < obstacle[i][1].y; k++)
@@ -185,7 +197,7 @@ protected:
 };
 
 
-class GameOver : public Snake, public Obstacle
+class GameOver : protected Snake, protected Obstacle
 {
 protected:
     bool selfCollision()
@@ -194,14 +206,22 @@ protected:
             if (snake[0] == snake[i])   return true;
         return false;
     }
+
+    bool obstacleCollision()
+    {
+        for (int i = 0; i < obstacle.size(); i++)
+            if (obstacle[i][0].x <= snake[0].x && obstacle[i][1].x > snake[0].x && obstacle[i][0].y <= snake[0].y && obstacle[i][1].y > snake[0].y)
+                return true;
+        return false;
+    }
 };
 
 
-class PlayGame : public GameOver
+class PlayGame : protected GameOver
 {
     void welcomeScreen()
     {
-        SetConsoleTextAttribute(console, 15);
+        SetConsoleTextAttribute(console, 140);
         cout << "\n|         /\\/\\/\\                         |";
         cout << "\n|        | ___ |                         |";
         cout << "\n|        \\/   \\/                         |";
@@ -235,6 +255,21 @@ class PlayGame : public GameOver
         else    setNewFruit();
     }
 
+    void display()
+    {
+        drawFrame();
+        drawObstacle();
+
+        SetConsoleTextAttribute(console, 37);  //green snake
+        for(int i = 0; i < snake.size(); i++)
+			snake[i].draw('#');
+
+		SetConsoleTextAttribute(console, 78);  //red apple        
+        fruit.draw('@');
+
+        SetConsoleTextAttribute(console, 180);
+    }
+
     void runGame()
     {
         system("cls");
@@ -253,21 +288,13 @@ class PlayGame : public GameOver
                 cout << "\nPress any key to start\t";
                 getch();
                 is_alive = true;
-                snake.erase(snake.begin() + 1, snake.end());
+                snake.erase(snake.begin(), snake.end());
+                snake.push_back(Point(20, 20));
             }
         
-        for(int i = snake.size() - 1; i > 0; i--)   //Snake moves
-            snake[i] = snake[i-1];
-        
-        switch(direction)   //Change direction of head
-        {
-            case 'w':   snake[0].moveUp();      break;
-            case 's':   snake[0].moveDown();    break;
-            case 'a':   snake[0].moveLeft();    break;
-            case 'd':   snake[0].moveRight();   break;
-        }
+        move();
 
-        if (selfCollision()) is_alive = false;
+        if (selfCollision() || obstacleCollision()) is_alive = false;
 
         if (fruit == snake[0])      //eat fruit
         {
@@ -275,16 +302,7 @@ class PlayGame : public GameOver
             setNewFruit();
         }
 
-        drawObstacle();
-
-        SetConsoleTextAttribute(console, 37);  //green snake
-        for(int i = 0; i < snake.size(); i++)
-			snake[i].draw('#');
-
-		SetConsoleTextAttribute(console, 78);  //red apple        
-        fruit.draw('@');
-
-        SetConsoleTextAttribute(console, 180);
+        display();
         Sleep(100);
     }
 
@@ -309,7 +327,7 @@ public:
 
             runGame();
         }
-        while(op != 'e' && op != 'e');    
+        while(op != 'e' && op != 'E');    
     }
 };
 
