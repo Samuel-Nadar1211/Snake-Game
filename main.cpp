@@ -7,7 +7,6 @@
 #include <ctime>
 #include <vector>
 
-#define MAX_SNAKE_SIZE 100
 #define HEIGHT 29
 #define WIDTH 119
 
@@ -42,61 +41,62 @@ protected:
 };
 
 
-class Snake : public Console
+class Point : public Console
 {
-    class Point : public Console
+public:
+    int x, y;
+
+    Point(int x = 10, int y = 10)
     {
-        int x, y;
+        this->x = x;
+        this->y = y;
+    }
 
-    public:
-        Point(int x = 10, int y = 10)
-        {
-            this->x = x;
-            this->y = y;
-        }
+    void setPoint(int x, int y)
+    {
+        this -> x = x;
+        this -> y = y;
+    }
 
-        void setPoint(int x, int y)
-        {
-            this -> x = x;
-            this -> y = y;
-        }
+    void moveUp()
+    {
+        y--;
+        if (y < 0)  y = HEIGHT;
+    }
+    
+    void moveDown()
+    {
+        y++;
+        if (y > HEIGHT)  y = 0;
+    }
+    
+    void moveLeft()
+    {
+        x--;
+        if (x < 0)  x = WIDTH;
+    }
+    
+    void moveRight()
+    {
+        x++;
+        if (x > WIDTH)  x = 0;
+    }
+    
+    void draw(char ch)
+    {
+        setCursorPosition(x, y);
+        cout << ch;
+    }
+    
+    bool operator ==(Point p)       //Collision
+    {
+        return x == p.x && y == p.y;
+    }
+};
 
-        void moveUp()
-        {
-            y--;
-            if (y < 0)  y = HEIGHT;
-        }
-        
-        void moveDown()
-        {
-            y++;
-            if (y > HEIGHT)  y = 0;
-        }
-        
-        void moveLeft()
-        {
-            x--;
-            if (x < 0)  x = WIDTH;
-        }
-        
-        void moveRight()
-        {
-            x++;
-            if (x > WIDTH)  x = 0;
-        }
-        
-        void draw(char ch)
-        {
-            setCursorPosition(x, y);
-            cout << ch;
-        }
-        
-        bool operator ==(Point p)       //Collision
-        {
-            return x == p.x && y == p.y;
-        }
-    };
 
+class Snake : virtual public Console
+{
 protected:
     vector<Point> snake;
     char direction;
@@ -107,11 +107,11 @@ protected:
     {
         setCursorInfo(false, 0);
         snake.push_back(Point(20, 20));
-        fruit.setPoint(rand() % WIDTH, rand() % HEIGHT);
+        fruit.setPoint(50, 10);
         is_alive = started = false;
     }
 
-    void grow(int x, int y)
+    void grow(int x = 0, int y = 0)
     {
         snake.push_back(Point(x, y));
     }
@@ -135,7 +135,59 @@ protected:
     {
         if (direction != 'a')   direction = 'd';
     }    
+};
+
+
+class Obstacle : virtual public Console
+{
+protected:
+    vector<vector<Point>> obstacle;
     
+    Obstacle()
+    {
+        obstacle.push_back({Point(30, 10), Point(40, 20)});
+    }
+
+    void drawFrame()
+    {
+        SetConsoleTextAttribute(console, 86);
+        Point temp;
+        for (int j = 0; j <= WIDTH; j++)
+        {
+            temp = Point(j, 0);
+            temp.draw('*');
+            temp = Point(j, HEIGHT);
+            temp.draw('*');
+        }
+        for (int j = 1; j < HEIGHT; j++)
+        {
+            temp = Point(0, j);
+            temp.draw('*');
+            temp = Point(WIDTH, j);
+            temp.draw('*');
+        }
+    }
+
+    void drawObstacle()
+    {
+        Point temp;
+        drawFrame();
+
+        SetConsoleTextAttribute(console, 108);
+        for (int i = 0; i < obstacle.size(); i++)
+            for (int j = obstacle[i][0].x; j < obstacle[i][1].x; j++)
+                for (int k = obstacle[i][0].y; k < obstacle[i][1].y; k++)
+                {
+                    temp = Point(j, k);
+                    temp.draw('+');
+                }
+    }
+};
+
+
+class GameOver : public Snake, public Obstacle
+{
+protected:
     bool selfCollision()
     {
         for(int i = 1; i < snake.size() - 1; i++)
@@ -144,7 +196,8 @@ protected:
     }
 };
 
-class PlayGame : public Snake
+
+class PlayGame : public GameOver
 {
     void welcomeScreen()
     {
@@ -166,6 +219,22 @@ class PlayGame : public Snake
         cout << "\n|    WELCOME TO SAMUEL's SNAKE GAME!!    |";
     }
     
+    void setNewFruit()
+    {
+        int x = rand() % (WIDTH - 1) + 1;
+        int y = rand() % (HEIGHT - 1) + 1;
+        
+        bool valid = true;
+        for (int i = 0; i < obstacle.size(); i++)
+            if (obstacle[i][0].x <= x && obstacle[i][1].x > x && obstacle[i][0].y <= y && obstacle[i][1].y > y)
+            {
+                valid = false;
+                break;
+            }
+        if (valid)  fruit.setPoint(x, y);
+        else    setNewFruit();
+    }
+
     void runGame()
     {
         system("cls");
@@ -200,19 +269,22 @@ class PlayGame : public Snake
 
         if (selfCollision()) is_alive = false;
 
-        if (fruit == snake[0])
-        {  
-            grow(0, 0);
-            fruit.setPoint(rand() % WIDTH, rand() % HEIGHT);
+        if (fruit == snake[0])      //eat fruit
+        {
+            grow();
+            setNewFruit();
         }
 
-        SetConsoleTextAttribute(console, 242);  //green snake
+        drawObstacle();
+
+        SetConsoleTextAttribute(console, 37);  //green snake
         for(int i = 0; i < snake.size(); i++)
 			snake[i].draw('#');
 
-		SetConsoleTextAttribute(console, 252);  //red apple        
+		SetConsoleTextAttribute(console, 78);  //red apple        
         fruit.draw('@');
 
+        SetConsoleTextAttribute(console, 180);
         Sleep(100);
     }
 
