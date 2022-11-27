@@ -154,12 +154,53 @@ protected:
 
 class Obstacle : virtual public Console
 {
+    void obstacle1()
+    {
+        obstacle.push_back({Point(1, 5), Point(15, 25)});
+        obstacle.push_back({Point(30, 10), Point(40, 20)});
+        obstacle.push_back({Point(35, 1), Point(60, 6)});
+        obstacle.push_back({Point(50, 15), Point(70, 25)});
+        obstacle.push_back({Point(70, 10), Point(90, 15)});
+        obstacle.push_back({Point(100, 10), Point(WIDTH, HEIGHT)});
+    }
+
+    void obstacle2()
+    {
+        obstacle.push_back({Point(1, 1), Point(10, 20)});
+        obstacle.push_back({Point(1, 1), Point(20, 10)});
+        obstacle.push_back({Point(40, 15), Point(80, 20)});
+        obstacle.push_back({Point(55, 5), Point(65, 25)});
+        obstacle.push_back({Point(90, 3), Point(110, 15)});
+        obstacle.push_back({Point(100, 20), Point(WIDTH, 25)});
+    }
+
+    void obstacle3()
+    {
+        obstacle.push_back({Point(5, 5), Point(25, 15)});
+        obstacle.push_back({Point(35, 15), Point(40, 20)});
+        obstacle.push_back({Point(45, 15), Point(60, HEIGHT)});
+        obstacle.push_back({Point(65, 1), Point(85, 10)});
+        obstacle.push_back({Point(70, 15), Point(100, 25)});
+    }
+
 protected:
     vector<vector<Point>> obstacle;
     
     Obstacle()
     {
-        obstacle.push_back({Point(30, 10), Point(40, 20)});
+        initialiseObstacle();
+    }
+
+    void initialiseObstacle()
+    {
+        obstacle.erase(obstacle.begin(), obstacle.end());
+
+        switch(rand() % 3)
+        {
+            case 0: obstacle1();    break;
+            case 1: obstacle2();    break;
+            case 2: obstacle3();    break;
+        }
     }
 
     void drawFrame()
@@ -217,11 +258,14 @@ protected:
 };
 
 
+//class 
+
+
 class PlayGame : protected GameOver
 {
-    void welcomeScreen()
+    void gameLogo()
     {
-        SetConsoleTextAttribute(console, 140);
+        SetConsoleTextAttribute(console, 245);
         cout << "\n|         /\\/\\/\\                         |";
         cout << "\n|        | ___ |                         |";
         cout << "\n|        \\/   \\/                         |";
@@ -236,7 +280,7 @@ class PlayGame : protected GameOver
         cout << "\n|          \\\\          /  \\\\  |          |";
         cout << "\n|           \\\\________/    \\\\/           |";
         cout << "\n|                                        |";
-        cout << "\n|    WELCOME TO SAMUEL's SNAKE GAME!!    |";
+        cout << "\n|          SAMUEL's SNAKE GAME!!         |";
     }
     
     void setNewFruit()
@@ -261,13 +305,23 @@ class PlayGame : protected GameOver
         drawObstacle();
 
         SetConsoleTextAttribute(console, 37);  //green snake
-        for(int i = 0; i < snake.size(); i++)
+        snake[0].draw('O');
+        for(int i = 1; i < snake.size(); i++)
 			snake[i].draw('#');
 
 		SetConsoleTextAttribute(console, 78);  //red apple        
         fruit.draw('@');
 
         SetConsoleTextAttribute(console, 180);
+    }
+
+    void reset()
+    {
+        is_alive = true;
+        snake.erase(snake.begin(), snake.end());
+        snake.push_back(Point(20, 20));
+        initialiseObstacle();
+        fruit.setPoint(50, 10);
     }
 
     void runGame()
@@ -277,19 +331,19 @@ class PlayGame : protected GameOver
         if(!is_alive)
             if(!started)
             {
-                welcomeScreen();
+                gameLogo();
+                cout << "\n\nWelcome to the Game!!\n";
                 cout << "\n\nPress any key to start\t";
                 getch();
-                is_alive = started = true; 
+                is_alive = started = true;
             }
             else
             {
-                cout << "\nGame Over :-(";
-                cout << "\nPress any key to start\t";
+                gameLogo();
+                cout << "\n\nGame Over :-(";
+                cout << "\nPress any key to restart\t";
                 getch();
-                is_alive = true;
-                snake.erase(snake.begin(), snake.end());
-                snake.push_back(Point(20, 20));
+                reset();
             }
         
         move();
@@ -327,7 +381,12 @@ public:
 
             runGame();
         }
-        while(op != 'e' && op != 'E');    
+        while(op != 'e' && op != 'E');
+
+        system("cls");
+        gameLogo();
+        cout << "\n\nThank you for Playing";
+        Sleep(2000);
     }
 };
 
