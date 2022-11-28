@@ -5,7 +5,10 @@
 #include <windows.h>
 #include <direct.h>
 #include <ctime>
+#include <fstream>
+#include <string>
 #include <vector>
+#include <utility>
 
 #define HEIGHT 29
 #define WIDTH 119
@@ -238,7 +241,7 @@ protected:
 };
 
 
-class GameOver : protected Snake, protected Obstacle
+class Collision : protected Snake, protected Obstacle
 {
 protected:
     bool selfCollision()
@@ -258,11 +261,71 @@ protected:
 };
 
 
-//class 
-
-
-class PlayGame : protected GameOver
+class Score
 {
+    pair<string, int> high_score[5];
+    void updateFile()
+    {
+        ofstream fout("HighScore.txt");
+
+        for (int i = 0; i < 5; i++)
+            fout << high_score[i].first << " " << high_score[i].second << endl;
+        fout.close();
+    }
+
+protected:    
+    int score;
+    
+    Score()
+    {
+        score = 1000;
+        
+        ifstream fin("HighScore.txt");
+
+        for (int i = 0; i < 5; i++)
+            fin >> high_score[i].first >> high_score[i].second;
+        fin.close();
+    }
+
+    void printHighScore()
+    {
+        cout << "\nLeaderboard-\n";
+        for (int i = 0; i < 5; i++)
+            cout << i + 1 << ". " << high_score[i].first << "\t\t" << high_score[i].second << endl;
+    }
+
+    void updateHighScore()
+    {
+        cout << "\nYour score: " << score << endl;
+
+        if (high_score[4].second >= score) return;
+
+        string name;
+        cout << "Enter your name: ";
+        cin >> name;
+
+        for (int i = 3; i >= 0; i--)
+            if (high_score[i].second >= score)
+            {
+                high_score[i + 1].first = name;
+                high_score[i + 1].second = score;
+                break;
+            }
+            else
+            {
+                high_score[i + 1].first = high_score[i].first;
+                high_score[i + 1].second = high_score[i].second;
+            }
+        
+        cout << "\nCongrats!! You are in the leaderboard\n";
+        updateFile();
+    }
+};
+
+
+class GameManager : protected Collision, protected Score
+{
+protected:
     void gameLogo()
     {
         SetConsoleTextAttribute(console, 245);
@@ -283,6 +346,14 @@ class PlayGame : protected GameOver
         cout << "\n|          SAMUEL's SNAKE GAME!!         |";
     }
     
+    void printRules()
+    {
+        cout << "\nRules:\n";
+        cout << "\n1. A -> Left\tS -> Down\tW -> Up  \tD -> Right\t\n";
+        cout << "2. Press E to Exit\n";
+        cout << "3. Don't hit the block or yourself\n";
+    }
+
     void setNewFruit()
     {
         int x = rand() % (WIDTH - 1) + 1;
@@ -295,6 +366,7 @@ class PlayGame : protected GameOver
                 valid = false;
                 break;
             }
+        
         if (valid)  fruit.setPoint(x, y);
         else    setNewFruit();
     }
@@ -318,13 +390,20 @@ class PlayGame : protected GameOver
     void reset()
     {
         is_alive = true;
+        score = 1000;
+
         snake.erase(snake.begin(), snake.end());
         snake.push_back(Point(20, 20));
+
         initialiseObstacle();
         fruit.setPoint(50, 10);
     }
+};
 
-    void runGame()
+
+class PlayGame : protected GameManager
+{  
+    bool runGame()
     {
         system("cls");
         
@@ -333,31 +412,45 @@ class PlayGame : protected GameOver
             {
                 gameLogo();
                 cout << "\n\nWelcome to the Game!!\n";
-                cout << "\n\nPress any key to start\t";
-                getch();
+                printRules();
+                cout << "\n\nPress any key other than E to start\t";
+
+                char c = getch();
+                if (c == 'E' || c == 'e')   return false;
+
                 is_alive = started = true;
             }
             else
             {
                 gameLogo();
                 cout << "\n\nGame Over :-(";
-                cout << "\nPress any key to restart\t";
-                getch();
+
+                updateHighScore();
+                printHighScore();
+
+                cout << "\nPress any key other than E to restart\t";
+                
+                char c = getch();
+                if (c == 'E' || c == 'e')   return false;
+
                 reset();
             }
         
         move();
+        score--;
 
         if (selfCollision() || obstacleCollision()) is_alive = false;
 
         if (fruit == snake[0])      //eat fruit
         {
             grow();
+            score += 1000;
             setNewFruit();
         }
 
         display();
         Sleep(100);
+        return true;
     }
 
 public:
@@ -379,7 +472,7 @@ public:
                 case 'd':   case 'D':   turnRight();    break;
             }
 
-            runGame();
+            if (!runGame()) break;
         }
         while(op != 'e' && op != 'E');
 
