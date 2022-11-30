@@ -1,6 +1,7 @@
 //C++ Progrm to implement Snake Game
 
 #include <iostream>
+#include <iomanip>
 #include <conio.h>
 #include <windows.h>
 #include <direct.h>
@@ -91,6 +92,12 @@ public:
         cout << ch;
     }
     
+    void erase()
+    {
+        setCursorPosition(x, y);
+        cout << ' ';
+    }
+
     bool operator ==(Point p)       //Collision
     {
         return x == p.x && y == p.y;
@@ -103,7 +110,7 @@ class Snake : virtual protected Console
 protected:
     vector<Point> snake;
     char direction;
-    Point fruit;
+    Point fruit, tail;
     bool is_alive, started;
 
     Snake()
@@ -114,7 +121,7 @@ protected:
         is_alive = started = false;
     }
 
-    void grow(int x = 0, int y = 0)
+    void grow(int x = 20, int y = 20)
     {
         snake.push_back(Point(x, y));
     }
@@ -269,7 +276,7 @@ class Score
         ofstream fout("HighScore.txt");
 
         for (int i = 0; i < 5; i++)
-            fout << high_score[i].first << " " << high_score[i].second << endl;
+            fout << high_score[i].first << endl << high_score[i].second << endl;
         fout.close();
     }
 
@@ -283,7 +290,12 @@ protected:
         ifstream fin("HighScore.txt");
 
         for (int i = 0; i < 5; i++)
-            fin >> high_score[i].first >> high_score[i].second;
+        {
+            getline(fin, high_score[i].first);
+            fin >> high_score[i].second;
+            string bin;
+            getline(fin, bin);
+        }
         fin.close();
     }
 
@@ -291,7 +303,7 @@ protected:
     {
         cout << "\nLeaderboard-\n";
         for (int i = 0; i < 5; i++)
-            cout << i + 1 << ". " << high_score[i].first << "\t\t" << high_score[i].second << endl;
+            cout << i + 1 << ". " << setw(20) << left << high_score[i].first << " - " << high_score[i].second << endl;
     }
 
     void updateHighScore()
@@ -302,9 +314,10 @@ protected:
 
         string name;
         cout << "Enter your name: ";
-        cin >> name;
+        getline (cin, name);
 
-        for (int i = 3; i >= 0; i--)
+        int i;
+        for (i = 3; i >= 0; i--)
             if (high_score[i].second >= score)
             {
                 high_score[i + 1].first = name;
@@ -316,6 +329,11 @@ protected:
                 high_score[i + 1].first = high_score[i].first;
                 high_score[i + 1].second = high_score[i].second;
             }
+        if (i < 0)
+        {
+            high_score[0].first = name;
+            high_score[0].second = score;
+        }
         
         cout << "\nCongrats!! You are in the leaderboard\n";
         updateFile();
@@ -373,18 +391,17 @@ protected:
 
     void display()
     {
-        drawFrame();
-        drawObstacle();
-
+        
+        SetConsoleTextAttribute(console, 180);
+        tail.erase();
+        tail = snake[snake.size() - 1];
+        
         SetConsoleTextAttribute(console, 37);  //green snake
         snake[0].draw('O');
-        for(int i = 1; i < snake.size(); i++)
-			snake[i].draw('#');
+        if (snake.size() > 1)   snake[1].draw('#');
 
 		SetConsoleTextAttribute(console, 78);  //red apple        
         fruit.draw('@');
-
-        SetConsoleTextAttribute(console, 180);
     }
 
     void reset()
@@ -404,13 +421,15 @@ protected:
 class PlayGame : protected GameManager
 {  
     bool runGame()
-    {
-        system("cls");
-        
+    {        
         if(!is_alive)
+        {
+            SetConsoleTextAttribute(console, 245);
+            system("cls");
+            gameLogo();
+
             if(!started)
             {
-                gameLogo();
                 cout << "\n\nWelcome to the Game!!\n";
                 printRules();
                 cout << "\n\nPress any key other than E to start\t";
@@ -420,9 +439,9 @@ class PlayGame : protected GameManager
 
                 is_alive = started = true;
             }
+
             else
             {
-                gameLogo();
                 cout << "\n\nGame Over :-(";
 
                 updateHighScore();
@@ -433,9 +452,17 @@ class PlayGame : protected GameManager
                 char c = getch();
                 if (c == 'E' || c == 'e')   return false;
 
-                reset();
+                reset();    
             }
-        
+
+            SetConsoleTextAttribute(console, 180);
+            system("cls");
+
+            drawFrame();
+            drawObstacle();
+            tail.setPoint(20, 20);
+        }
+
         move();
         score--;
 
@@ -449,7 +476,7 @@ class PlayGame : protected GameManager
         }
 
         display();
-        Sleep(100);
+        Sleep(85);
         return true;
     }
 
