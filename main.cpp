@@ -7,7 +7,8 @@
 #include <direct.h>
 #include <ctime>
 #include <fstream>
-#include <string>
+#include <cstring>
+//#include <string>
 #include <vector>
 #include <utility>
 
@@ -121,9 +122,9 @@ protected:
         is_alive = started = false;
     }
 
-    void grow(int x = 20, int y = 20)
+    void grow()
     {
-        snake.push_back(Point(x, y));
+        snake.push_back(Point(20, 20));
     }
 
     void turnUp()
@@ -162,7 +163,7 @@ protected:
 };
 
 
-class Obstacle : virtual public Console
+class Obstacle : virtual protected Console
 {
     void obstacle1()
     {
@@ -270,13 +271,13 @@ protected:
 
 class Score
 {
-    pair<string, int> high_score[5];
+    pair<char[20], int> high_score[5];
     void updateFile()
     {
-        ofstream fout("HighScore.txt");
+        ofstream fout("HighScore.dat", ios::out | ios::binary);
 
         for (int i = 0; i < 5; i++)
-            fout << high_score[i].first << endl << high_score[i].second << endl;
+            fout.write (reinterpret_cast<char *> (&high_score[i]), sizeof(pair<char[20], int>));
         fout.close();
     }
 
@@ -287,16 +288,28 @@ protected:
     {
         score = 1000;
         
-        ifstream fin("HighScore.txt");
+        ifstream fin("HighScore.dat", ios::in | ios::binary);
 
-        for (int i = 0; i < 5; i++)
+        if (fin.is_open())
         {
-            getline(fin, high_score[i].first);
-            fin >> high_score[i].second;
-            string bin;
-            getline(fin, bin);
+            for (int i = 0; i < 5; i++)
+                fin.read (reinterpret_cast<char *> (&high_score[i]), sizeof(pair<char[20], int>));
+            fin.close();
         }
-        fin.close();
+        else
+        {
+            strcpy(high_score[0].first, "Kavitha");
+            strcpy(high_score[1].first, "Rexlin");
+            strcpy(high_score[2].first, "George");
+            strcpy(high_score[3].first, "Nivetha");
+            strcpy(high_score[4].first, "Samuel");
+            high_score[0].second = 50000;
+            high_score[1].second = 25000;
+            high_score[2].second = 10000;
+            high_score[3].second = 7500;
+            high_score[4].second = 5000;
+            updateFile();
+        }
     }
 
     void printHighScore()
@@ -312,26 +325,26 @@ protected:
 
         if (high_score[4].second >= score) return;
 
-        string name;
+        char name[20];
         cout << "Enter your name: ";
-        getline (cin, name);
+        cin.getline(name, 20);
 
         int i;
         for (i = 3; i >= 0; i--)
             if (high_score[i].second >= score)
             {
-                high_score[i + 1].first = name;
+                strcpy(high_score[i + 1].first, name);
                 high_score[i + 1].second = score;
                 break;
             }
             else
             {
-                high_score[i + 1].first = high_score[i].first;
+                strcpy(high_score[i + 1].first, high_score[i].first);
                 high_score[i + 1].second = high_score[i].second;
             }
         if (i < 0)
         {
-            high_score[0].first = name;
+            strcpy(high_score[0].first, name);
             high_score[0].second = score;
         }
         
