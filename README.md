@@ -18,3 +18,7 @@ The Faster you collect fruit, more points you are awarded <br>
 ### UML
 
 ![image](https://user-images.githubusercontent.com/98077236/205944426-0843ec56-5e35-4627-b856-fab24823cd1f.png)
+
+### For More Information
+
+<a href = "Snake Game.pptx"> Click Here! </a>
