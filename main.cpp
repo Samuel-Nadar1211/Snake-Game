@@ -1,4 +1,4 @@
-//C++ Progrm to implement Snake Game
+// C++ Progrm to implement Snake Game
 
 #include <iostream>
 #include <iomanip>
@@ -8,7 +8,6 @@
 #include <ctime>
 #include <fstream>
 #include <cstring>
-//#include <string>
 #include <vector>
 #include <utility>
 
@@ -16,7 +15,6 @@
 #define WIDTH 119
 
 using namespace std;
-
 
 class Console
 {
@@ -29,7 +27,8 @@ protected:
         console = GetStdHandle(STD_OUTPUT_HANDLE);
     }
 
-    void setCursorPosition(int x, int y){
+    void setCursorPosition(int x, int y)
+    {
         cursor_position.X = x;
         cursor_position.Y = y;
         SetConsoleCursorPosition(console, cursor_position);
@@ -37,14 +36,14 @@ protected:
 
     void setCursorInfo(bool visible, DWORD size)
     {
-        if(size == 0)   size = 20;
-        CONSOLE_CURSOR_INFO lpCursor;	
+        if (size == 0)
+            size = 20;
+        CONSOLE_CURSOR_INFO lpCursor;
         lpCursor.bVisible = visible;
         lpCursor.dwSize = size;
         SetConsoleCursorInfo(console, &lpCursor);
     }
 };
-
 
 class Point : public Console
 {
@@ -59,58 +58,61 @@ public:
 
     void setPoint(int x, int y)
     {
-        this -> x = x;
-        this -> y = y;
+        this->x = x;
+        this->y = y;
     }
 
     void moveUp()
     {
         y--;
-        if (y <= 0)  y = HEIGHT - 1;
+        if (y <= 0)
+            y = HEIGHT - 1;
     }
-    
+
     void moveDown()
     {
         y++;
-        if (y >= HEIGHT)  y = 1;
+        if (y >= HEIGHT)
+            y = 1;
     }
-    
+
     void moveLeft()
     {
         x--;
-        if (x <= 0)  x = WIDTH - 1;
+        if (x <= 0)
+            x = WIDTH - 1;
     }
-    
+
     void moveRight()
     {
         x++;
-        if (x >= WIDTH)  x = 1;
+        if (x >= WIDTH)
+            x = 1;
     }
-    
+
     void draw(char ch)
     {
         setCursorPosition(x, y);
         cout << ch;
     }
-    
+
     void erase()
     {
         setCursorPosition(x, y);
         cout << ' ';
     }
 
-    bool operator ==(Point p)       //Collision
+    bool operator==(Point p) // Collision
     {
         return x == p.x && y == p.y;
     }
 };
 
-
 class Snake : virtual protected Console
 {
 protected:
     vector<Point> snake;
-    char direction;
+    char direction = 'w';
     Point fruit, tail;
     bool is_alive, started;
 
@@ -129,39 +131,58 @@ protected:
 
     void turnUp()
     {
-        if (direction != 's')   direction = 'w';
+        if (direction != 's')
+            direction = 'w';
     }
 
     void turnDown()
     {
-        if (direction != 'w')   direction = 's';
+        if (direction != 'w')
+            direction = 's';
     }
 
     void turnLeft()
     {
-        if (direction != 'd')   direction = 'a';
+        if (direction != 'd')
+            direction = 'a';
     }
 
     void turnRight()
     {
-        if (direction != 'a')   direction = 'd';
+        if (direction != 'a')
+            direction = 'd';
     }
 
     void move()
     {
-        for(int i = snake.size() - 1; i > 0; i--)   //Snake moves
-            snake[i] = snake[i-1];
-        
-        switch(direction)   //Change direction of head
-        {
-            case 'w':   snake[0].moveUp();      break;
-            case 's':   snake[0].moveDown();    break;
-            case 'a':   snake[0].moveLeft();    break;
-            case 'd':   snake[0].moveRight();   break;
-        }
-    }    
-};
+        for (int i = snake.size() - 1; i > 0; i--) // Snake moves
+            snake[i] = snake[i - 1];
 
+        switch (direction) // Change direction of head
+        {
+        case 'w':
+            snake[0].moveUp();
+            break;
+        case 's':
+            snake[0].moveDown();
+            break;
+        case 'a':
+            snake[0].moveLeft();
+            break;
+        case 'd':
+            snake[0].moveRight();
+            break;
+        }
+    }
+
+    void drawSnake()
+    {
+        SetConsoleTextAttribute(console, 37);
+        snake[0].draw('O');
+        for (int i = 1; i < snake.size(); i++)
+            snake[i].draw('#');
+    }
+};
 
 class Obstacle : virtual protected Console
 {
@@ -196,7 +217,7 @@ class Obstacle : virtual protected Console
 
 protected:
     vector<vector<Point>> obstacle;
-    
+
     Obstacle()
     {
         initialiseObstacle();
@@ -206,11 +227,17 @@ protected:
     {
         obstacle.erase(obstacle.begin(), obstacle.end());
 
-        switch(rand() % 3)
+        switch (rand() % 3)
         {
-            case 0: obstacle1();    break;
-            case 1: obstacle2();    break;
-            case 2: obstacle3();    break;
+        case 0:
+            obstacle1();
+            break;
+        case 1:
+            obstacle2();
+            break;
+        case 2:
+            obstacle3();
+            break;
         }
     }
 
@@ -248,14 +275,14 @@ protected:
     }
 };
 
-
 class Collision : protected Snake, protected Obstacle
 {
 protected:
     bool selfCollision()
     {
-        for(int i = 1; i < snake.size() - 1; i++)
-            if (snake[0] == snake[i])   return true;
+        for (int i = 1; i < snake.size() - 1; i++)
+            if (snake[0] == snake[i])
+                return true;
         return false;
     }
 
@@ -268,7 +295,6 @@ protected:
     }
 };
 
-
 class Score
 {
     pair<char[20], int> high_score[5];
@@ -277,23 +303,21 @@ class Score
         ofstream fout("HighScore.dat", ios::out | ios::binary);
 
         for (int i = 0; i < 5; i++)
-            fout.write (reinterpret_cast<char *> (&high_score[i]), sizeof(pair<char[20], int>));
+            fout.write(reinterpret_cast<char *>(&high_score[i]), sizeof(pair<char[20], int>));
         fout.close();
     }
 
-protected:    
-    int score;
-    
+protected:
+    int score = 1001;
+
     Score()
     {
-        score = 1000;
-        
         ifstream fin("HighScore.dat", ios::in | ios::binary);
 
         if (fin.is_open())
         {
             for (int i = 0; i < 5; i++)
-                fin.read (reinterpret_cast<char *> (&high_score[i]), sizeof(pair<char[20], int>));
+                fin.read(reinterpret_cast<char *>(&high_score[i]), sizeof(pair<char[20], int>));
             fin.close();
         }
         else
@@ -314,16 +338,17 @@ protected:
 
     void printHighScore()
     {
-        cout << "\nLeaderboard-\n";
+        cout << "\n\t\tLeaderboard-\n";
         for (int i = 0; i < 5; i++)
-            cout << i + 1 << ". " << setw(20) << left << high_score[i].first << " - " << high_score[i].second << endl;
+            cout << "\t\t" << i + 1 << ". " << setw(20) << left << high_score[i].first << " - " << high_score[i].second << endl;
     }
 
     void updateHighScore()
     {
-        cout << "\nYour score: " << score << endl;
+        cout << "\n\t\tYour score: " << score << endl;
 
-        if (high_score[4].second >= score) return;
+        if (high_score[4].second >= score)
+            return;
 
         char name[20];
         cout << "Enter your name: ";
@@ -347,12 +372,11 @@ protected:
             strcpy(high_score[0].first, name);
             high_score[0].second = score;
         }
-        
-        cout << "\nCongrats!! You are in the leaderboard\n";
+
+        cout << "\n\t\tCongrats!! You are in the leaderboard\n";
         updateFile();
     }
 };
-
 
 class GameManager : protected Collision, protected Score
 {
@@ -360,36 +384,36 @@ protected:
     void gameLogo()
     {
         SetConsoleTextAttribute(console, 245);
-        cout << "\n|         /\\/\\/\\                         |";
-        cout << "\n|        | ___ |                         |";
-        cout << "\n|        \\/   \\/                         |";
-        cout << "\n|        /     \\                         |";
-        cout << "\n|       / /\\ /\\ \\                        |";
-        cout << "\n|       | \\/ \\/ |                        |";
-        cout << "\n|       \\\\  _   /                        |";
-        cout << "\n|        \\\\    /                         |";
-        cout << "\n|         |    |       _...._            |";
-        cout << "\n|         |    \\\\    /       \\           |";
-        cout << "\n|         \\\\    \\\\__/    __   |          |";
-        cout << "\n|          \\\\          /  \\\\  |          |";
-        cout << "\n|           \\\\________/    \\\\/           |";
-        cout << "\n|                                        |";
-        cout << "\n|          SAMUEL's SNAKE GAME!!         |";
+        cout << "\n\t\t\t\t\t|         /\\/\\/\\                         |";
+        cout << "\n\t\t\t\t\t|        | ___ |                         |";
+        cout << "\n\t\t\t\t\t|        \\/   \\/                         |";
+        cout << "\n\t\t\t\t\t|        /     \\                         |";
+        cout << "\n\t\t\t\t\t|       / /\\ /\\ \\                        |";
+        cout << "\n\t\t\t\t\t|       | \\/ \\/ |                        |";
+        cout << "\n\t\t\t\t\t|       \\\\  _   /                        |";
+        cout << "\n\t\t\t\t\t|        \\\\    /                         |";
+        cout << "\n\t\t\t\t\t|         |    |       _...._            |";
+        cout << "\n\t\t\t\t\t|         |    \\\\    /       \\           |";
+        cout << "\n\t\t\t\t\t|         \\\\    \\\\__/    __   |          |";
+        cout << "\n\t\t\t\t\t|          \\\\          /  \\\\  |          |";
+        cout << "\n\t\t\t\t\t|           \\\\________/    \\\\/           |";
+        cout << "\n\t\t\t\t\t|                                        |";
+        cout << "\n\t\t\t\t\t|          SAMUEL's SNAKE GAME!!         |";
     }
-    
+
     void printRules()
     {
-        cout << "\nRules:\n";
-        cout << "\n1. A -> Left\tS -> Down\tW -> Up  \tD -> Right\t\n";
-        cout << "2. Press E to Exit\n";
-        cout << "3. Don't hit the block or yourself\n";
+        cout << "\n\t\tRules:\n";
+        cout << "\n\t\t\t1. A -> Left\tS -> Down\tW -> Up  \tD -> Right\tP -> Pause\t\n";
+        cout << "\t\t\t2. Press E to Exit\n";
+        cout << "\t\t\t3. Don't hit the block or yourself\n";
     }
 
     void setNewFruit()
     {
         int x = rand() % (WIDTH - 1) + 1;
         int y = rand() % (HEIGHT - 1) + 1;
-        
+
         bool valid = true;
         for (int i = 0; i < obstacle.size(); i++)
             if (obstacle[i][0].x <= x && obstacle[i][1].x > x && obstacle[i][0].y <= y && obstacle[i][1].y > y)
@@ -397,30 +421,32 @@ protected:
                 valid = false;
                 break;
             }
-        
-        if (valid)  fruit.setPoint(x, y);
-        else    setNewFruit();
+
+        if (valid)
+            fruit.setPoint(x, y);
+        else
+            setNewFruit();
     }
 
     void display()
     {
-        
         SetConsoleTextAttribute(console, 180);
         tail.erase();
         tail = snake[snake.size() - 1];
-        
-        SetConsoleTextAttribute(console, 37);  //green snake
-        snake[0].draw('O');
-        if (snake.size() > 1)   snake[1].draw('#');
 
-		SetConsoleTextAttribute(console, 78);  //red apple        
+        SetConsoleTextAttribute(console, 37); // green snake
+        snake[0].draw('O');
+        if (snake.size() > 1)
+            snake[1].draw('#');
+
+        SetConsoleTextAttribute(console, 78); // red apple
         fruit.draw('@');
     }
 
     void reset()
     {
         is_alive = true;
-        score = 1000;
+        score = 1001;
 
         snake.erase(snake.begin(), snake.end());
         snake.push_back(Point(20, 20));
@@ -430,42 +456,109 @@ protected:
     }
 };
 
+class SwitchScreen : protected GameManager
+{
+protected:
+    void confirmExit()
+    {
+        SetConsoleTextAttribute(console, 223);
+        system("cls");
 
-class PlayGame : protected GameManager
-{  
+        setCursorPosition(WIDTH / 3, HEIGHT / 3);
+        cout << "Do you want to exit the game?";
+        setCursorPosition(WIDTH / 3, HEIGHT / 3 + 1);
+        cout << "Your score will not be saved";
+        setCursorPosition(WIDTH / 3, HEIGHT / 3 + 2);
+        cout << "Press N to reject and any other key to confirm: ";
+
+        char choice;
+        cin >> choice;
+
+        if (choice == 'n' || choice == 'N')
+            resume();
+        else
+        {
+            SetConsoleTextAttribute(console, 245);
+            system("cls");
+
+            gameLogo();
+            cout << "\n\n\t\t\t\t\tThank you for Playing";
+            Sleep(2000);
+
+            exit(0);
+        }
+    }
+
+    void pause()
+    {
+        SetConsoleTextAttribute(console, 223);
+        system("cls");
+
+        setCursorPosition(WIDTH / 3, HEIGHT / 3);
+        cout << "Game is paused!";
+        setCursorPosition(WIDTH / 3, HEIGHT / 3 + 1);
+        cout << "Your Score: " << score;
+        setCursorPosition(WIDTH / 3, HEIGHT / 3 + 2);
+        cout << "Do you want to resume the game (Press Y): ";
+
+        char choice;
+        do
+        {
+            setCursorPosition(WIDTH / 3 + 43, HEIGHT / 3 + 2);
+            cin >> choice;
+        } while (choice != 'Y' && choice != 'y');
+
+        resume();
+    }
+
+    void resume()
+    {
+        SetConsoleTextAttribute(console, 180);
+        system("cls");
+
+        drawFrame();
+        drawObstacle();
+        drawSnake();
+    }
+};
+
+class PlayGame : protected SwitchScreen
+{
     bool runGame()
-    {        
-        if(!is_alive)
+    {
+        if (!is_alive)
         {
             SetConsoleTextAttribute(console, 245);
             system("cls");
             gameLogo();
 
-            if(!started)
+            if (!started)
             {
-                cout << "\n\nWelcome to the Game!!\n";
+                cout << "\n\n\t\tWelcome to the Game!!\n";
                 printRules();
-                cout << "\n\nPress any key other than E to start\t";
+                cout << "\n\n\t\tPress any key other than E to start\t";
 
                 char c = getch();
-                if (c == 'E' || c == 'e')   return false;
+                if (c == 'E' || c == 'e')
+                    return false;
 
                 is_alive = started = true;
             }
 
             else
             {
-                cout << "\n\nGame Over :-(";
+                cout << "\n\n\t\tGame Over :-(";
 
                 updateHighScore();
                 printHighScore();
 
-                cout << "\nPress any key other than E to restart\t";
-                
-                char c = getch();
-                if (c == 'E' || c == 'e')   return false;
+                cout << "\n\t\tPress any key other than E to restart\t";
 
-                reset();    
+                char c = getch();
+                if (c == 'E' || c == 'e')
+                    return false;
+
+                reset();
             }
 
             SetConsoleTextAttribute(console, 180);
@@ -479,9 +572,14 @@ class PlayGame : protected GameManager
         move();
         score--;
 
-        if (selfCollision() || obstacleCollision()) is_alive = false;
+        setCursorPosition(WIDTH / 2 - 3, HEIGHT);
+        SetConsoleTextAttribute(console, 228);
+        cout << setfill('0') << setw(6) << right << score << setfill(' ');
 
-        if (fruit == snake[0])      //eat fruit
+        if (selfCollision() || obstacleCollision())
+            is_alive = false;
+
+        if (fruit == snake[0]) // eat fruit
         {
             grow();
             score += 1000;
@@ -489,7 +587,17 @@ class PlayGame : protected GameManager
         }
 
         display();
-        Sleep(85);
+        switch (direction) // Change direction of head
+        {
+        case 'w':
+        case 's':
+            Sleep(120);
+            break;
+        case 'a':
+        case 'd':
+            Sleep(85);
+            break;
+        }
         return true;
     }
 
@@ -499,33 +607,56 @@ public:
         srand(time(NULL));
 
         char op = ' ';
-        do
+        while (true)
         {
-            if(kbhit())
+            if (kbhit())
                 op = getch();
-            
-            switch(op)
+
+            switch (op)
             {
-                case 'w':   case 'W':   turnUp();       break;
-                case 's':   case 'S':   turnDown();     break;
-                case 'a':   case 'A':   turnLeft();     break;
-                case 'd':   case 'D':   turnRight();    break;
+            case 'w':
+            case 'W':
+                turnUp();
+                break;
+            case 's':
+            case 'S':
+                turnDown();
+                break;
+            case 'a':
+            case 'A':
+                turnLeft();
+                break;
+            case 'd':
+            case 'D':
+                turnRight();
+                break;
+            case 'p':
+            case 'P':
+                pause();
+                op = ' ';
+                break;
+            case 'e':
+            case 'E':
+                confirmExit();
+                op = ' ';
+                break;
             }
 
-            if (!runGame()) break;
+            if (!runGame())
+                break;
         }
-        while(op != 'e' && op != 'E');
 
+        SetConsoleTextAttribute(console, 245);
         system("cls");
+
         gameLogo();
-        cout << "\n\nThank you for Playing";
+        cout << "\n\n\t\t\t\t\tThank you for Playing";
         Sleep(2000);
     }
 };
 
-
 int main()
 {
-	PlayGame snake;
-	return 0;
+    PlayGame snake;
+    return 0;
 }
